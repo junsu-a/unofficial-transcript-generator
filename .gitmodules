@@ -1,0 +1,6 @@
+[submodule "unofficial-transcript-generator"]
+	path = unofficial-transcript-generator
+	url = https://github.com/anjjunsu/unofficial-transcript-generator.git
+[submodule "unofficial-transcript-generator.wiki"]
+	path = unofficial-transcript-generator.wiki
+	url = https://github.com/anjjunsu/unofficial-transcript-generator.wiki.git
