@@ -1,3 +1,6 @@
+### ide ###
+.vscode
+
 ### react ###
 .DS_*
 *.log
