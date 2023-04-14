@@ -15,3 +15,16 @@ def get_total_used_counts(db: Session) -> float:
         db.add(instance)
         db.commit()
         return 0
+
+def increment_total_requests(db: Session):
+    instance = db.query(database_models.History) \
+        .with_for_update(of=database_models.History) \
+        .filter(database_models.History.id == 1).first()
+
+    if instance:
+        instance.value += 1
+    else:
+        instance = database_models.History(name="TOTAL_REQUESTS", value=1)
+        db.add(instance)
+
+    db.commit()
