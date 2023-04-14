@@ -1,9 +1,24 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
 
 function Home() {
+  const url = "http://localhost:8000"
   const [pdfFile, setPdfFile] = useState(null);
   const [pages, setPages] = useState(null);
+  const [totalStudentMoneySaved, setTotalStudentMoenySaved] = useState(null)
+
+  useEffect(() => {
+    const fetchTotalStudentMoneySaved = async () => {
+      try {
+        const response = await axios.get(url + "/total-student-money-saved")
+        setTotalStudentMoenySaved(response.data);
+      } catch (error) {
+        console.error("Error fetching total student money saved data:", error);
+      }
+    };
+
+    fetchTotalStudentMoneySaved();
+  }, []);
 
   const handleFileChange = (event) => {
     setPdfFile(event.target.files[0]);
@@ -17,7 +32,7 @@ function Home() {
 
     try {
       const response = await axios.post(
-        "http://localhost:8000/upload",
+        url + "/upload",
         formData
       );
       setPages(response.data.pages);
@@ -36,6 +51,11 @@ function Home() {
           onChange={handleFileChange}
         />
         <button onClick={handleUpload}>Upload PDF</button>
+        {totalStudentMoneySaved != null && (
+          <div>
+            <h2>Total student money saved: ${totalStudentMoneySaved}</h2>
+          </div>
+        )}
         {pages && (
           <div>
             <h2>Extracted Text</h2>
