@@ -1,13 +1,30 @@
 import os
+import sys
+import logging
 import pdfplumber
+from dotenv import load_dotenv
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi import Depends, FastAPI, File, UploadFile
 from fastapi.responses import JSONResponse
-
+from sqlalchemy.orm import Session
 from src.database.database import engine, SessionLocal
 from src.database import database_models, database_crud
 
 app = FastAPI()
+
+# Logger
+logging.basicConfig(encoding='utf-8',
+                    level=logging.DEBUG, 
+                    format='%(asctime)s %(message)s',
+                    handlers=[
+                        logging.FileHandler("app.log"),
+                        logging.StreamHandler(sys.stdout)
+                    ])
+logging.info("Server started")
+
+load_dotenv()
+
+OFFICIAL_TRANSCRIPT_FEE = float(os.getenv("OFFICIAL_TRANSCRIPT_FEE"))
 
 origins = [
     "http://localhost:3000",
@@ -31,14 +48,20 @@ def get_db():
     finally:
         db.close()
 
-@app.post('/upload')
+@app.get("/total-student-money-saved")
+def get_total_student_money_saved(db: Session = Depends(get_db)):
+    total_student_money_saved =  database_crud.get_total_used_counts(db) * OFFICIAL_TRANSCRIPT_FEE
+    logging.info(f"Returning total student money saved. Value: {total_student_money_saved}")
+    return total_student_money_saved
+
+@app.post("/upload")
 async def upload(file: UploadFile = File(...)):
-    if not file.filename.lower().endswith('.pdf'):
-        return JSONResponse(content={'error': 'File is not a PDF'}, status_code=400)
+    if not file.filename.lower().endswith(".pdf"):
+        return JSONResponse(content={"error": "File is not a PDF"}, status_code=400)
 
     # Save the uploaded file temporarily
-    temp_filename = 'temp.pdf'
-    with open(temp_filename, 'wb') as buffer:
+    temp_filename = "temp.pdf"
+    with open(temp_filename, "wb") as buffer:
         buffer.write(await file.read())
 
     # Extract text from the PDF using pdfplumber
@@ -51,4 +74,4 @@ async def upload(file: UploadFile = File(...)):
     for p in pages:
         print(f"{p}\n")
 
-    return {'pages': pages}
+    return {"pages": pages}
