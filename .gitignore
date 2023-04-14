@@ -22,3 +22,6 @@ utg
 
 ### Secrets ###
 secrets
+
+### Environment variables ###
+.env
