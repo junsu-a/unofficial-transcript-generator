@@ -14,7 +14,7 @@ app = FastAPI()
 
 # Logger
 logging.basicConfig(encoding='utf-8',
-                    level=logging.DEBUG, 
+                    level=logging.INFO, 
                     format='%(asctime)s %(message)s',
                     handlers=[
                         logging.FileHandler("app.log"),
@@ -55,7 +55,7 @@ def get_total_student_money_saved(db: Session = Depends(get_db)):
     return total_student_money_saved
 
 @app.post("/upload")
-async def upload(file: UploadFile = File(...)):
+async def upload(db: Session = Depends(get_db), file: UploadFile = File(...)):
     if not file.filename.lower().endswith(".pdf"):
         return JSONResponse(content={"error": "File is not a PDF"}, status_code=400)
 
@@ -73,5 +73,7 @@ async def upload(file: UploadFile = File(...)):
 
     for p in pages:
         print(f"{p}\n")
+
+    database_crud.increment_total_requests(db)
 
     return {"pages": pages}
