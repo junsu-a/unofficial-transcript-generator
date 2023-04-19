@@ -5,8 +5,9 @@ class Courses(Base):
     __tablename__ = "courses"
 
     id = Column(Integer, primary_key=True, index=True)
-    course_code = Column(String, unique=True, index=True)
-    course_title = Column(String, unique=True, index=True)
+    subject = Column(String)
+    code = Column(String)
+    title = Column(String)
 
 class History(Base):
     __tablename__ = "history"
