@@ -1,14 +1,15 @@
 import os
 import sys
 import logging
-import pdfplumber
 from dotenv import load_dotenv
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi import Depends, FastAPI, File, UploadFile
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
+from src.utilities.transcript_utilities import TranscriptParser
 from src.database.database import engine, SessionLocal
 from src.database import database_models, database_crud
+from src.utilities.pdf_utilities import extract_text_from_pdf
 
 app = FastAPI()
 
@@ -54,26 +55,13 @@ def get_total_student_money_saved(db: Session = Depends(get_db)):
     logging.info(f"Returning total student money saved. Value: {total_student_money_saved}")
     return total_student_money_saved
 
-@app.post("/upload")
-async def upload(db: Session = Depends(get_db), file: UploadFile = File(...)):
+@app.post("/generate-unofficial-transcript")
+async def generate_unofficial_transcript(db: Session = Depends(get_db), file: UploadFile = File(...)):
     if not file.filename.lower().endswith(".pdf"):
         return JSONResponse(content={"error": "File is not a PDF"}, status_code=400)
 
-    # Save the uploaded file temporarily
-    temp_filename = "temp.pdf"
-    with open(temp_filename, "wb") as buffer:
-        buffer.write(await file.read())
-
-    # Extract text from the PDF using pdfplumber
-    with pdfplumber.open(temp_filename) as pdf:
-        pages = [page.extract_text() for page in pdf.pages]
-
-    # Remove the temporary file
-    os.remove(temp_filename)
-
-    for p in pages:
-        print(f"{p}\n")
+    pages = await extract_text_from_pdf(file)
 
     database_crud.increment_total_requests(db)
-
-    return {"pages": pages}
+    
+    return "good"

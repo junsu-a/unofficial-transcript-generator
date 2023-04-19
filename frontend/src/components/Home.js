@@ -32,7 +32,7 @@ function Home() {
 
     try {
       const response = await axios.post(
-        url + "/upload",
+        url + "/generate-unofficial-transcript",
         formData
       );
       setPages(response.data.pages);
