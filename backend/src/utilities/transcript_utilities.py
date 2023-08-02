@@ -24,12 +24,14 @@ class Transcript:
         s += "==================================================================\n"
         return s
 
-
     def add_course(self, session: str, course: Course):
         if session in self.courses:
             self.courses[session].append(course)
         else:
             self.courses[session] = [course]
+    
+    def generate_transcript_pdf(self):
+        pass
 
 class TranscriptParser:
     def __init__(self, db: Session, data: List[str]):
