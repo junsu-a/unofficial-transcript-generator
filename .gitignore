@@ -10,6 +10,15 @@ logs
 
 node_modules
 bower_components
+**/package-lock.json
+
+### backend ###
+backend/bin
+backend/include
+backend/lib
+backend/src/__pycache__
+**/*.cfg
+**/*.pyc
 
 ### test data ###
 test_data
