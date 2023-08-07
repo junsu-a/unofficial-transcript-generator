@@ -16,12 +16,14 @@ bower_components
 backend/bin
 backend/include
 backend/lib
+backend/share
 backend/src/__pycache__
 **/*.cfg
 **/*.pyc
 
 ### test data ###
 test_data
+**/*.pdf
 
 ### docs ###
 planning.md

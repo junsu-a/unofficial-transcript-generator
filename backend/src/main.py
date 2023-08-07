@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi import Depends, FastAPI, File, UploadFile
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
-from src.utilities.transcript_utilities import TranscriptParser
+from src.utilities.transcript_utilities import Transcript, TranscriptParser
 from src.database.database import engine, SessionLocal
 from src.database import database_models, database_crud
 from src.utilities.pdf_utilities import extract_text_from_pdf
@@ -61,6 +61,9 @@ async def generate_unofficial_transcript(db: Session = Depends(get_db), file: Up
         return JSONResponse(content={"error": "File is not a PDF"}, status_code=400)
 
     pages = await extract_text_from_pdf(file)
+
+    transcript = TranscriptParser(db, pages).parse()
+    transcript.generate_transcript_pdf()
 
     database_crud.increment_total_requests(db)
     
