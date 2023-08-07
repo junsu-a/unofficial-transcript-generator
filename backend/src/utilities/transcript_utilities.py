@@ -7,6 +7,20 @@ from sqlalchemy.orm import Session
 from weasyprint import HTML
 
 class Transcript:
+    """
+    Represents a student's transcript, including student details and courses.
+
+    Attributes:
+        student_surname (str): The student's surname.
+        student_given_name (str): The student's given name.
+        student_number (str): The student's unique identification number.
+        courses (dict): A dictionary containing the student's courses, grouped by session.
+
+    Methods:
+        __str__(): Returns a string representation of the transcript.
+        add_course(session, course): Adds a course to the transcript under a given session.
+        generate_transcript_pdf(): Generates a PDF version of the transcript.
+    """
     def __init__(self, student_surname, student_given_name, student_number, courses):
         self.student_surname = student_surname
         self.student_given_name = student_given_name
@@ -33,49 +47,41 @@ class Transcript:
     
     # TODO: Export html string to somewhere out. It's too messy.
     def generate_transcript_pdf(self):
-        html_str = """
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <title>Transcript</title>
-                <style>
-                    table {
-                        width: 100%;
-                        border-collapse: collapse;
-                    }
-                    th, td {
-                        border: 1px solid black;
-                        padding: 5px;
-                        text-align: left;
-                    }
-                    th {
-                        background-color: #f2f2f2;
-                    }
-                </style>
-            </head>
-            <body>
-                <h1>Transcript</h1>
-                <p>Name: {name}</p>
-                <p>ID: {student_id}</p>
-                <table>
-                    <tr>
-                        <th>Course</th>
-                        <th>Grade</th>
-                    </tr>
-                    {courses}
-                </table>
-            </body>
-            </html>
-        """
+        from .pdf_utilities import PdfUtilities
+        html_str = PdfUtilities.create_html_string_for_transcript(self)
 
         HTML(string=html_str).write_pdf("transcript.pdf")
 
 class TranscriptParser:
+    """
+    Parses raw student data to create a Transcript object.
+
+    Attributes:
+        data (List[str]): The raw student data as a list of strings.
+        db (Session): A database session for additional data retrieval.
+
+    Methods:
+        parse(): Parses the raw data and returns a Transcript object.
+        parse_student_data(): Extracts and returns student information from the raw data.
+    """
     def __init__(self, db: Session, data: List[str]):
+        """
+        Initializes the TranscriptParser with a database session and raw student data.
+
+        Args:
+            db (Session): The database session.
+            data (List[str]): The raw student data.
+        """
         self.data: List[str] = data
         self.db = db
 
     def parse(self) -> Transcript:
+        """
+        Parses the raw student data to create and return a Transcript object.
+
+        Returns:
+            Transcript: The parsed Transcript object.
+        """
         student_data = self.parse_student_data()
         student_surname = student_data["student_surname"]
         student_given_name = student_data["student_given_name"]
@@ -85,6 +91,13 @@ class TranscriptParser:
         return Transcript(student_surname, student_given_name, student_number, courses)
 
     def parse_student_data(self) -> Dict[str, str]:
+        """
+        Extracts and returns the student's surname, given name, and student number
+        from the raw data using regular expressions.
+
+        Returns:
+            Dict[str, str]: A dictionary containing the student's surname, given name, and student number.
+        """
         student_data = {}
 
         # regex explanation
@@ -118,6 +131,13 @@ class TranscriptParser:
         return student_data
 
     def parse_course_data(self) -> Dict[str, List[Course]]:
+        """
+        Parses the course information from the raw data and returns a dictionary
+        grouping the courses by session.
+
+        Returns:
+            Dict[str, List[Course]]: A dictionary containing the courses, grouped by session.
+        """
         courses = {}
 
         lines_list = self.split_extracted_data_to_lines()
@@ -157,6 +177,15 @@ class TranscriptParser:
     
     # TODO: Refactor creater functions and make it cleaner
     def create_non_pass_fail_course(self, words: List[str]):
+        """
+        Creates a Course object for non-pass/fail courses.
+
+        Args:
+            words (List[str]): The extracted words representing the course information.
+
+        Returns:
+            Course: The created Course object.
+        """
         subject = words[0]
         code = words[1] 
         section = words[2]
@@ -178,6 +207,15 @@ class TranscriptParser:
                       average=average, year=year, standing=standing)
 
     def create_pass_fail_course_with_term(self, words: List[str]):
+        """
+        Creates a Course object for pass/fail courses with term information.
+
+        Args:
+            words (List[str]): The extracted words representing the course information.
+
+        Returns:
+            Course: The created Course object.
+        """
         subject = words[0]
         code = words[1] 
         section = words[2]
@@ -196,6 +234,15 @@ class TranscriptParser:
                       average=average, year=year, standing=standing)
 
     def create_pass_fail_course_without_term(self, words: List[str]):
+        """
+        Creates a Course object for pass/fail courses without term information.
+
+        Args:
+            words (List[str]): The extracted words representing the course information.
+
+        Returns:
+            Course: The created Course object.
+        """
         subject = words[0]
         code = words[1] 
         section = words[2]
@@ -213,7 +260,16 @@ class TranscriptParser:
                       title=title, num_grade=num_grade, letter_grade=letter_grade, 
                       average=average, year=year, standing=standing)
 
-    def create_in_progress_course(self, words: List[str]):
+    def create_in_progress_course(self, words: List[str]): 
+        """
+        Creates a Course object for courses that are in progress.
+
+        Args:
+            words (List[str]): The extracted words representing the course information.
+
+        Returns:
+            Course: The created Course object.
+        """
         subject = words[0]
         code = words[1] 
         section = words[2]
@@ -232,6 +288,15 @@ class TranscriptParser:
                       average=average, year=year, standing=standing)
 
     def create_withdraw_course(self, words: List[str]):
+        """
+        Creates a Course object for courses that have been withdrawn.
+
+        Args:
+            words (List[str]): The extracted words representing the course information.
+
+        Returns:
+            Course: The created Course object.
+        """
         subject = words[0]
         code = words[1] 
         section = words[2]
@@ -250,6 +315,12 @@ class TranscriptParser:
                       average=average, year=year, standing=standing)
 
     def split_extracted_data_to_lines(self) -> List[str]:
+        """
+        Splits the extracted data into lines, ready for further parsing.
+
+        Returns:
+            List[str]: The list of lines extracted from the raw data.
+        """
         lines_list: List[str] = []
         for page in self.data:
             lines = page.split("\n")
