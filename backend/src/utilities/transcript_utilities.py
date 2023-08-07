@@ -3,7 +3,6 @@ import logging
 from src.database.database_crud import get_course_title
 from typing import Dict, List
 from .course_utilities import Course
-from .pdf_utilities import create_html_string_for_transcript
 from sqlalchemy.orm import Session
 from weasyprint import HTML
 
@@ -48,40 +47,8 @@ class Transcript:
     
     # TODO: Export html string to somewhere out. It's too messy.
     def generate_transcript_pdf(self):
-        html_str = """
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <title>Transcript</title>
-                <style>
-                    table {
-                        width: 100%;
-                        border-collapse: collapse;
-                    }
-                    th, td {
-                        border: 1px solid black;
-                        padding: 5px;
-                        text-align: left;
-                    }
-                    th {
-                        background-color: #f2f2f2;
-                    }
-                </style>
-            </head>
-            <body>
-                <h1>Transcript</h1>
-                <p>Name: {name}</p>
-                <p>ID: {student_id}</p>
-                <table>
-                    <tr>
-                        <th>Course</th>
-                        <th>Grade</th>
-                    </tr>
-                    {courses}
-                </table>
-            </body>
-            </html>
-        """
+        from .pdf_utilities import PdfUtilities
+        html_str = PdfUtilities.create_html_string_for_transcript(self)
 
         HTML(string=html_str).write_pdf("transcript.pdf")
 

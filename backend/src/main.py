@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 from src.utilities.transcript_utilities import Transcript, TranscriptParser
 from src.database.database import engine, SessionLocal
 from src.database import database_models, database_crud
-from src.utilities.pdf_utilities import extract_text_from_pdf
+from src.utilities.pdf_utilities import PdfUtilities
 
 app = FastAPI()
 
@@ -60,7 +60,7 @@ async def generate_unofficial_transcript(db: Session = Depends(get_db), file: Up
     if not file.filename.lower().endswith(".pdf"):
         return JSONResponse(content={"error": "File is not a PDF"}, status_code=400)
 
-    pages = await extract_text_from_pdf(file)
+    pages = await PdfUtilities.extract_text_from_pdf(file)
 
     transcript = TranscriptParser(db, pages).parse()
     transcript.generate_transcript_pdf()
