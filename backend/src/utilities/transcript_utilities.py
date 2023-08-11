@@ -1,5 +1,6 @@
 import re
 import logging
+import tempfile
 from src.database.database_crud import get_course_title
 from typing import Dict, List
 from .course_utilities import Course
@@ -45,12 +46,17 @@ class Transcript:
         else:
             self.courses[session] = [course]
     
-    # TODO: Export html string to somewhere out. It's too messy.
-    def generate_transcript_pdf(self):
+    def generate_transcript_pdf(self) -> str:
         from .pdf_utilities import PdfUtilities
+
+        temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf")
+        pdf_file_path = temp_file.name
+
         html_str = PdfUtilities.create_html_string_for_transcript(self)
 
-        HTML(string=html_str).write_pdf("transcript.pdf")
+        HTML(string=html_str).write_pdf(pdf_file_path)
+
+        return pdf_file_path
 
 class TranscriptParser:
     """

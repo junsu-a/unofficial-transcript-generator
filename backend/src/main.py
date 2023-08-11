@@ -3,8 +3,8 @@ import sys
 import logging
 from dotenv import load_dotenv
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi import Depends, FastAPI, File, UploadFile
-from fastapi.responses import JSONResponse
+from fastapi import Depends, FastAPI, File, UploadFile, BackgroundTasks
+from fastapi.responses import JSONResponse, FileResponse
 from sqlalchemy.orm import Session
 from src.utilities.transcript_utilities import Transcript, TranscriptParser
 from src.database.database import engine, SessionLocal
@@ -56,15 +56,19 @@ def get_total_student_money_saved(db: Session = Depends(get_db)):
     return total_student_money_saved
 
 @app.post("/generate-unofficial-transcript")
-async def generate_unofficial_transcript(db: Session = Depends(get_db), file: UploadFile = File(...)):
+async def generate_unofficial_transcript(background_tasks: BackgroundTasks, db: Session = Depends(get_db), file: UploadFile = File(...)):
     if not file.filename.lower().endswith(".pdf"):
         return JSONResponse(content={"error": "File is not a PDF"}, status_code=400)
 
     pages = await PdfUtilities.extract_text_from_pdf(file)
 
     transcript = TranscriptParser(db, pages).parse()
-    transcript.generate_transcript_pdf()
+
+    file_path = transcript.generate_transcript_pdf()
+
+    response = FileResponse(file_path, headers={"Content-Disposition": f"attachment; filename={transcript.student_given_name}_{transcript.student_surname}_{transcript.student_number}_transcript.pdf"})
+    background_tasks.add_task(PdfUtilities.delete_file, file_path)
 
     database_crud.increment_total_requests(db)
     
-    return "good"
+    return response

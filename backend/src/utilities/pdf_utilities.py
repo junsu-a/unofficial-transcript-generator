@@ -102,3 +102,7 @@ class PdfUtilities:
         """
 
         return html_str
+
+    @staticmethod
+    def delete_file(file_path: str):
+        os.remove(file_path)
